@@ -1,0 +1,11 @@
+{
+  "roundLimit": 200,
+  "teamA": [
+    { "creature": "BattleAnalyst", "modifiers": ["MagicShield"] },
+    { "creature": "AmuletMaster", "modifiers": ["DoubleStrike"] }
+  ],
+  "teamB": [
+    { "creature": "DeathlessHorror" },
+    { "creature": "ViciousBrawler" }
+  ]
+}

@@ -1,0 +1,12 @@
+using CombatSimulator.Core.Abstractions;
+
+namespace CombatSimulator.Core.Spells;
+
+public sealed class StrengthPotion : ISpell
+{
+    public ICreature Apply(ICreature target)
+    {
+        target.SetAttack(new AttackPoint(target.Attack.Value + 5));
+        return target;
+    }
+}
