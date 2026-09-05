@@ -1,4 +1,4 @@
-namespace CombatSimulator.Cli.Replay;
+namespace CombatSimulator.Application.Replay;
 
 public sealed record ReplayParticipant(
     int Slot,

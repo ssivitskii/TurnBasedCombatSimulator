@@ -20,7 +20,7 @@ public sealed class ViciousBrawler : Creature
         int healthBefore = Health.Value;
         base.ReceiveDamage(amount, randomNumberGenerator);
         if (amount > 0 && healthBefore > 0 && IsAlive)
-            SetAttack(new AttackPoint(Attack.Value * 2));
+            SetAttack(new AttackPoint((int)Math.Min(int.MaxValue, (long)Attack.Value * 2)));
     }
 
     public override ICreature DeepCopy()

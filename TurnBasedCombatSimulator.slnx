@@ -1,9 +1,12 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/CombatSimulator.Application/CombatSimulator.Application.csproj" />
+    <Project Path="src/CombatSimulator.Api/CombatSimulator.Api.csproj" />
     <Project Path="src/CombatSimulator.Core/CombatSimulator.Core.csproj" />
     <Project Path="src/CombatSimulator.Cli/CombatSimulator.Cli.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/CombatSimulator.ApiTests/CombatSimulator.ApiTests.csproj" />
     <Project Path="tests/CombatSimulator.Tests/CombatSimulator.Tests.csproj" />
   </Folder>
 </Solution>

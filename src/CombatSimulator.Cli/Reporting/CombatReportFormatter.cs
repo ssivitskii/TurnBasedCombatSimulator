@@ -1,3 +1,4 @@
+using CombatSimulator.Application.Replay;
 using CombatSimulator.Cli.Replay;
 using CombatSimulator.Cli.Tournament;
 using CombatSimulator.Core.Combat;

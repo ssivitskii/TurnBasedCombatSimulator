@@ -1,0 +1,296 @@
+<main>
+  <header class="hero">
+    <div>
+      <p class="eyebrow">TACTICAL REPLAY CONSOLE / .NET CORE</p>
+      <h1>Runebound <span>Arena</span></h1>
+      <p>
+        Compose two warbands. The server resolves every strike; this console only replays the truth.
+      </p>
+    </div>
+    <div class="sigil" aria-hidden="true">⚔</div>
+  </header>
+
+  <form [formGroup]="form" (ngSubmit)="run()">
+    <section class="control-bar" aria-label="Battle settings">
+      <label>Seed <input type="number" formControlName="seed" /></label>
+      <label
+        >Round limit <input type="number" min="1" max="1000" formControlName="roundLimit"
+      /></label>
+      <div class="presets">
+        <span>Loadout</span>
+        <button type="button" class="ghost" (click)="loadPreset('duel')">Arcane duel</button>
+        <button type="button" class="ghost" (click)="loadPreset('squads')">Iron squads</button>
+      </div>
+      <button class="run" type="submit" [disabled]="state === 'loading'">
+        {{ state === 'loading' ? 'Resolving…' : 'Run battle' }}
+      </button>
+    </section>
+
+    <div class="teams">
+      <section class="team team-a" formArrayName="teamA">
+        <div class="team-title">
+          <div>
+            <span>A</span>
+            <h2>Ember Covenant</h2>
+          </div>
+          <small>{{ teamA.length }}/7</small>
+        </div>
+        @for (fighter of teamA.controls; track fighter; let i = $index) {
+          <article class="fighter" [formGroupName]="i">
+            <div class="fighter-head">
+              <strong>Fighter {{ i + 1 }}</strong>
+              <div>
+                <button
+                  type="button"
+                  aria-label="Move fighter up"
+                  (click)="moveFighter(teamA, i, -1)"
+                >
+                  ↑
+                </button>
+                <button
+                  type="button"
+                  aria-label="Move fighter down"
+                  (click)="moveFighter(teamA, i, 1)"
+                >
+                  ↓
+                </button>
+                <button type="button" aria-label="Remove fighter" (click)="removeFighter(teamA, i)">
+                  ×
+                </button>
+              </div>
+            </div>
+            <label
+              >Creature<select formControlName="creature">
+                @for (name of catalog.creatures; track name) {
+                  <option [value]="name">{{ name }}</option>
+                }
+              </select></label
+            >
+            <div class="stats">
+              <label
+                >Attack override<input
+                  type="number"
+                  min="0"
+                  placeholder="Base"
+                  formControlName="attack" /></label
+              ><label
+                >Health override<input
+                  type="number"
+                  min="0"
+                  placeholder="Base"
+                  formControlName="health"
+              /></label>
+            </div>
+            <fieldset>
+              <legend>Runes</legend>
+              <label><input type="checkbox" formControlName="magicShield" /> Magic Shield</label
+              ><label><input type="checkbox" formControlName="doubleStrike" /> Double Strike</label>
+            </fieldset>
+          </article>
+        }
+        <button
+          type="button"
+          class="add"
+          (click)="addFighter(teamA)"
+          [disabled]="teamA.length >= 7"
+        >
+          + Add fighter
+        </button>
+      </section>
+
+      <div class="versus" aria-hidden="true"><span>VS</span></div>
+
+      <section class="team team-b" formArrayName="teamB">
+        <div class="team-title">
+          <div>
+            <span>B</span>
+            <h2>Frostbound Host</h2>
+          </div>
+          <small>{{ teamB.length }}/7</small>
+        </div>
+        @for (fighter of teamB.controls; track fighter; let i = $index) {
+          <article class="fighter" [formGroupName]="i">
+            <div class="fighter-head">
+              <strong>Fighter {{ i + 1 }}</strong>
+              <div>
+                <button
+                  type="button"
+                  aria-label="Move fighter up"
+                  (click)="moveFighter(teamB, i, -1)"
+                >
+                  ↑
+                </button>
+                <button
+                  type="button"
+                  aria-label="Move fighter down"
+                  (click)="moveFighter(teamB, i, 1)"
+                >
+                  ↓
+                </button>
+                <button type="button" aria-label="Remove fighter" (click)="removeFighter(teamB, i)">
+                  ×
+                </button>
+              </div>
+            </div>
+            <label
+              >Creature<select formControlName="creature">
+                @for (name of catalog.creatures; track name) {
+                  <option [value]="name">{{ name }}</option>
+                }
+              </select></label
+            >
+            <div class="stats">
+              <label
+                >Attack override<input
+                  type="number"
+                  min="0"
+                  placeholder="Base"
+                  formControlName="attack" /></label
+              ><label
+                >Health override<input
+                  type="number"
+                  min="0"
+                  placeholder="Base"
+                  formControlName="health"
+              /></label>
+            </div>
+            <fieldset>
+              <legend>Runes</legend>
+              <label><input type="checkbox" formControlName="magicShield" /> Magic Shield</label
+              ><label><input type="checkbox" formControlName="doubleStrike" /> Double Strike</label>
+            </fieldset>
+          </article>
+        }
+        <button
+          type="button"
+          class="add"
+          (click)="addFighter(teamB)"
+          [disabled]="teamB.length >= 7"
+        >
+          + Add fighter
+        </button>
+      </section>
+    </div>
+  </form>
+
+  @if (state === 'error') {
+    <div class="notice error" role="alert">
+      <strong>Battle rejected</strong><span>{{ errorMessage }}</span>
+    </div>
+  }
+  @if (state === 'loading') {
+    <div class="notice loading" role="status">The combat engine is resolving the timeline…</div>
+  }
+
+  <section *ngIf="replay as battle" class="replay" aria-labelledby="replay-heading">
+    <div class="result-head">
+      <div>
+        <p class="eyebrow">SERVER REPLAY / SEED {{ battle.seed }}</p>
+        <h2 id="replay-heading">{{ battle.result.verdict }}</h2>
+      </div>
+      <dl>
+        <div>
+          <dt>Reason</dt>
+          <dd>{{ battle.result.endReason }}</dd>
+        </div>
+        <div>
+          <dt>Rounds</dt>
+          <dd>{{ battle.result.rounds }}</dd>
+        </div>
+        <div>
+          <dt>Events</dt>
+          <dd>{{ battle.events.length }}</dd>
+        </div>
+      </dl>
+    </div>
+
+    <div class="arena">
+      <div class="roster a">
+        <h3>Team A</h3>
+        @for (fighter of battle.teamA; track fighter.slot) {
+          <div class="combatant" [class.active]="active(fighter, 'teamA')">
+            <b>{{ fighter.slot }}</b
+            ><span
+              ><strong>{{ fighter.creature }}</strong
+              ><small>{{ snapshot(fighter, 'teamA') }}</small></span
+            >
+          </div>
+        }
+      </div>
+      <div class="event-card">
+        <span class="round">{{ currentEvent ? 'ROUND ' + currentEvent.round : 'READY' }}</span>
+        @if (currentEvent; as event) {
+          <strong>{{ event.attackerName || event.actingTeam }}</strong
+          ><i>✦</i><strong>{{ event.targetName || event.skipReason }}</strong>
+          <p>
+            {{
+              event.type === 'attackResolved' ? event.netHealthLoss + ' net damage' : 'Turn skipped'
+            }}
+          </p>
+        } @else {
+          <strong>Battle start</strong><i>◇</i><strong>Awaiting first event</strong>
+        }
+      </div>
+      <div class="roster b">
+        <h3>Team B</h3>
+        @for (fighter of battle.teamB; track fighter.slot) {
+          <div class="combatant" [class.active]="active(fighter, 'teamB')">
+            <b>{{ fighter.slot }}</b
+            ><span
+              ><strong>{{ fighter.creature }}</strong
+              ><small>{{ snapshot(fighter, 'teamB') }}</small></span
+            >
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="transport">
+      <button
+        type="button"
+        (click)="step(-1)"
+        [disabled]="eventIndex < 0"
+        aria-label="Previous event"
+      >
+        ←
+      </button>
+      <button type="button" class="play" (click)="togglePlayback()">
+        {{ playing ? 'Pause' : 'Play' }}
+      </button>
+      <button
+        type="button"
+        (click)="step(1)"
+        [disabled]="eventIndex >= battle.events.length - 1"
+        aria-label="Next event"
+      >
+        →
+      </button>
+      <button type="button" (click)="resetPlayback()">Reset</button>
+      <input
+        aria-label="Replay event"
+        type="range"
+        min="-1"
+        [max]="battle.events.length - 1"
+        [value]="eventIndex"
+        (input)="scrub($any($event.target).value)"
+      />
+      <output>{{ eventIndex + 1 }} / {{ battle.events.length }}</output>
+    </div>
+
+    <div class="timeline">
+      <h3>Event ledger</h3>
+      <ol>
+        @for (event of battle.events; track event.sequence) {
+          <li [class.current]="eventIndex === $index" (click)="scrub($index.toString())">
+            <span>#{{ event.sequence }}</span
+            ><b>R{{ event.round }} · {{ event.actingTeam }}</b
+            ><span
+              >{{ event.attackerName || 'Skipped' }} →
+              {{ event.targetName || event.skipReason }}</span
+            ><em>{{ event.netHealthLoss ?? '—' }}</em>
+          </li>
+        }
+      </ol>
+    </div>
+  </section>
+</main>

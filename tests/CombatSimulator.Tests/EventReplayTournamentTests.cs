@@ -1,5 +1,6 @@
+using CombatSimulator.Application.Configuration;
+using CombatSimulator.Application.Replay;
 using CombatSimulator.Cli;
-using CombatSimulator.Cli.Configuration;
 using CombatSimulator.Cli.Replay;
 using CombatSimulator.Cli.Reporting;
 using CombatSimulator.Cli.Tournament;

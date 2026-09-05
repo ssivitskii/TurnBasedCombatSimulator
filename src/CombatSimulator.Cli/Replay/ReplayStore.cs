@@ -1,3 +1,4 @@
+using CombatSimulator.Application.Replay;
 using CombatSimulator.Core.Combat;
 using System.Text.Json;
 using System.Text.Json.Serialization;

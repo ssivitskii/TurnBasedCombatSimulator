@@ -1,3 +1,4 @@
+using CombatSimulator.Application.Configuration;
 using CombatSimulator.Cli.Configuration;
 using CombatSimulator.Core.Abstractions;
 using CombatSimulator.Core.Boards;
@@ -7,6 +8,7 @@ using CombatSimulator.Core.Creatures;
 using CombatSimulator.Core.Decorators;
 using CombatSimulator.Core.Modifiers;
 using CombatSimulator.Core.Randomness;
+using CombatSimulator.Core.Spells;
 
 namespace CombatSimulator.Tests;
 
@@ -135,6 +137,49 @@ public sealed class CoreTests
         {
             File.Delete(path);
         }
+    }
+
+    [Fact]
+    public void BattleAnalystAttackGrowthSaturatesAtMaximumInteger()
+    {
+        var analyst = new BattleAnalyst();
+        analyst.SetAttack(new AttackPoint(int.MaxValue));
+        var target = new TestCreature(0, int.MaxValue);
+
+        analyst.AttackTarget(target, new SystemRandomNumberGenerator(1));
+
+        Assert.Equal(int.MaxValue, analyst.Attack.Value);
+    }
+
+    [Fact]
+    public void ViciousBrawlerAttackGrowthSaturatesAtMaximumInteger()
+    {
+        var brawler = new ViciousBrawler();
+        brawler.SetAttack(new AttackPoint((int.MaxValue / 2) + 1));
+
+        brawler.ReceiveDamage(1, new SystemRandomNumberGenerator(1));
+
+        Assert.Equal(int.MaxValue, brawler.Attack.Value);
+    }
+
+    [Fact]
+    public void StaminaPotionHealthGrowthSaturatesAtMaximumInteger()
+    {
+        var target = new TestCreature(1, int.MaxValue);
+
+        new StaminaPotion().Apply(target);
+
+        Assert.Equal(int.MaxValue, target.Health.Value);
+    }
+
+    [Fact]
+    public void StrengthPotionAttackGrowthSaturatesAtMaximumInteger()
+    {
+        var target = new TestCreature(int.MaxValue, 1);
+
+        new StrengthPotion().Apply(target);
+
+        Assert.Equal(int.MaxValue, target.Attack.Value);
     }
 
     private sealed class TestCreature : CombatSimulator.Core.Engine.Creature

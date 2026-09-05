@@ -1,6 +1,6 @@
 # Turn-Based Combat Simulator
 
-A deterministic command-line battle engine for configurable creature teams. Battles preserve the existing object-oriented creature abilities, spells, builders, factories, decorators, board rules, and injectable random-number strategy.
+A deterministic .NET battle engine with a command-line workflow and an interactive Angular replay console. Build two teams, run a seeded battle on the server, then step through every authoritative event in the browser.
 
 ## Features
 
@@ -12,25 +12,30 @@ A deterministic command-line battle engine for configurable creature teams. Batt
 - Reports win/draw counts, round distribution, observable net health loss caused by each acting team, and target defeats in text, JSON, or CSV.
 - Distinguishes team defeat, true stalemate, and configured round-limit draws.
 - Deep-copies complete runtime state before combat, including consumed shields and revivals.
+- Provides a responsive team editor, presets, arena highlights, event scrubber, and timed playback.
 
 ## Tech Stack
 
-C# · .NET 9 · System.Text.Json · LINQ · xUnit
+C# · .NET 9 · ASP.NET Core · Angular 22 · TypeScript · xUnit · Vitest
 
 ## Architecture
 
-`CombatSimulator.Core` contains the battle domain, explicit ordered event model, creatures, boards, spells, Factory/Builder, Decorator modifiers, and RNG strategy. `CombatSimulator.Cli` maps JSON configuration into fresh boards, persists versioned replay documents, derives deterministic game seeds, coordinates bounded parallel work, aggregates reports in input order, and renders text/JSON/CSV. Parallelism is explicitly capped at 64 workers.
+`CombatSimulator.Core` owns all combat rules. `CombatSimulator.Application` validates shared configuration, builds fresh boards, runs seeded combat, and maps the versioned replay contract. `CombatSimulator.Cli` keeps file I/O, replay persistence, tournaments, and reports. `CombatSimulator.Api` exposes only in-memory battle requests and never accepts file paths or invokes the CLI. `frontend` replays server events without reimplementing combat.
 
 ## Project Structure
 
 - `src/CombatSimulator.Core` — deterministic domain engine.
-- `src/CombatSimulator.Cli` — JSON configuration and executable entry point.
+- `src/CombatSimulator.Application` — shared configuration and single-battle orchestration.
+- `src/CombatSimulator.Cli` — file I/O, reporting, tournaments, and executable entry point.
+- `src/CombatSimulator.Api` — bounded HTTP adapter and health endpoint.
+- `frontend` — standalone strict Angular battle editor and replay UI.
 - `tests/CombatSimulator.Tests` — behavior and deep-copy regression tests.
+- `tests/CombatSimulator.ApiTests` — HTTP contract and application-boundary tests.
 - `examples/battle.json` — runnable teams.
 
 ## Getting Started
 
-Requires the .NET 9 SDK.
+Requires the .NET 9 SDK and Node.js with npm.
 
 ## Build
 
@@ -39,6 +44,24 @@ dotnet build TurnBasedCombatSimulator.slnx -c Release
 ```
 
 ## Run
+
+### Interactive web app
+
+Run the API and UI in two terminals:
+
+```bash
+ASPNETCORE_URLS=http://localhost:8080 dotnet run --project src/CombatSimulator.Api
+```
+
+```bash
+cd frontend
+npm install
+npm start
+```
+
+Open `http://localhost:4200`. Angular proxies `/api` and `/health` to the API, so no broad CORS policy is enabled.
+
+### CLI
 
 ```bash
 dotnet run --project src/CombatSimulator.Cli -- battle examples/battle.json --seed 42
@@ -54,7 +77,17 @@ dotnet run --project src/CombatSimulator.Cli -- balance examples/battle.json --g
 
 ```bash
 dotnet test TurnBasedCombatSimulator.slnx -c Release
+cd frontend && npm test
+cd frontend && npm run build
 ```
+
+## HTTP API
+
+- `POST /api/battles/run` accepts `{ "seed": 42, "configuration": { "roundLimit": 100, "teamA": [...], "teamB": [...] } }` and returns the deterministic replay document.
+- `GET /api/battles/catalog` returns the supported creature and modifier names used by the editor.
+- `GET /health/live` reports process liveness. Swagger UI is available in Development.
+
+Requests are capped at 128 KiB. Each team must contain 1–7 fighters; overrides must be nonnegative; the API round limit is 1–1000; creatures and modifiers must come from the catalog. A fighter accepts at most two unique modifiers, compared case-insensitively. At most four simulations run concurrently and excess requests receive `429 application/problem+json` without queuing. Configuration failures use safe `400` Problem Details responses.
 
 ## Examples
 
@@ -64,6 +97,8 @@ The example demonstrates two-creature teams and both available decorators. Creat
 
 The RNG is an interface with a production adapter over `System.Random`, making individual battles reproducible without embedding test behavior in the domain. Combat always operates on deep copies, so configured boards can be reused concurrently. A turn produces an ordered event with one-based `(team, slot)` identity, which distinguishes duplicate creature names. The event reports net observed health change across the complete logical attack; it does not claim attempted damage, individual DoubleStrike hits, shield absorption, revival events, or other internal ability steps that the current interfaces cannot observe.
 
+Stat-growth abilities use saturating integer arithmetic: attack or health that would exceed `Int32.MaxValue` remains at `Int32.MaxValue`. This keeps every accepted nonnegative API override inside the domain value-object invariant.
+
 Replay schema version `1` stores no timestamp or machine metadata. The `replay` command validates and renders the recorded events directly; it never reruns the battle or RNG. A replay is immutable playback, not a resumable domain checkpoint.
 
 Tournament indices use the documented `splitmix64-v1` derivation from the base seed. Each index owns fresh boards and RNG, parallel work writes to a fixed result slot, and aggregation occurs after completion in index order. Therefore output is independent of worker scheduling and configured parallelism. The round limit remains an explicit draw reason rather than an exceptional failure.
@@ -72,4 +107,4 @@ Balance mode runs every derived seed twice: original team orientation and swappe
 
 ## Limitations / Future Improvements
 
-The simulator has a compact fixed catalog and no interactive editor. Replay snapshots expose public attack/health state but cannot reconstruct hidden decorator internals for resuming a battle. Tournament statistics are descriptive and do not provide ELO, confidence intervals, DPS, or low-level ability telemetry.
+The simulator has a compact fixed catalog. Replay snapshots expose public attack/health state but cannot reconstruct hidden decorator internals for resuming a battle, so the UI visualizes observable events rather than individual shield, revival, or double-strike substeps. The web API intentionally exposes one battle only; tournaments remain CLI workflows. Tournament statistics are descriptive and do not provide ELO, confidence intervals, DPS, or low-level ability telemetry.

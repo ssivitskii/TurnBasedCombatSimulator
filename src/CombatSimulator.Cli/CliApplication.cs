@@ -1,10 +1,10 @@
+using CombatSimulator.Application;
+using CombatSimulator.Application.Configuration;
+using CombatSimulator.Application.Replay;
 using CombatSimulator.Cli.Configuration;
 using CombatSimulator.Cli.Replay;
 using CombatSimulator.Cli.Reporting;
 using CombatSimulator.Cli.Tournament;
-using CombatSimulator.Core.Boards;
-using CombatSimulator.Core.Combat;
-using CombatSimulator.Core.Randomness;
 using System.Globalization;
 using System.Text.Json;
 
@@ -42,6 +42,7 @@ public sealed class CliApplication
 
     private readonly TextWriter _error;
     private readonly BattleConfigurationLoader _loader = new();
+    private readonly BattleSimulationService _simulation = new();
     private readonly TextWriter _output;
     private readonly ReplayStore _replayStore = new();
     private readonly TournamentRunner _tournament = new();
@@ -200,11 +201,7 @@ public sealed class CliApplication
         EnsureOnly(options, BattleOptions);
         int seed = ParseInteger(options, "--seed", required: true);
         BattleDefinition definition = await _loader.LoadAsync(path, cancellationToken).ConfigureAwait(false);
-        (PlayerBoard teamA, PlayerBoard teamB) = definition.BuildBoards();
-        BattleResult result = new CombatRunner(
-            new SystemRandomNumberGenerator(seed),
-            definition.RoundLimit).Run(teamA, teamB, cancellationToken);
-        ReplayDocument replay = ReplayMapper.Create(definition, seed, result);
+        ReplayDocument replay = _simulation.Run(definition.Configuration, seed, cancellationToken);
         if (options.TryGetValue("--save-replay", out string? replayPath))
             await _replayStore.SaveAsync(replayPath, replay, cancellationToken).ConfigureAwait(false);
         await CombatReportFormatter.WriteBattleAsync(_output, replay, format).ConfigureAwait(false);

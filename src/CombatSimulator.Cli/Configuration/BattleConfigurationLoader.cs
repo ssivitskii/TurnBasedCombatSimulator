@@ -1,3 +1,4 @@
+using CombatSimulator.Application.Configuration;
 using System.Text.Json;
 
 namespace CombatSimulator.Cli.Configuration;
@@ -16,23 +17,6 @@ public sealed class BattleConfigurationLoader
             stream,
             SerializerOptions,
             cancellationToken).ConfigureAwait(false);
-        if (configuration is null)
-            throw new ArgumentException("Battle configuration is empty.");
-        Validate(configuration);
-        return new BattleDefinition(configuration);
-    }
-
-    private static void Validate(BattleConfiguration configuration)
-    {
-        if (configuration.TeamA is null || configuration.TeamA.Count == 0)
-            throw new ArgumentException("Team A must contain at least one creature.");
-        if (configuration.TeamB is null || configuration.TeamB.Count == 0)
-            throw new ArgumentException("Team B must contain at least one creature.");
-        if (configuration.TeamA.Count > 7 || configuration.TeamB.Count > 7)
-            throw new ArgumentException("A team can contain at most seven creatures.");
-        if (configuration.RoundLimit <= 0)
-            throw new ArgumentException("Round limit must be positive.");
-        if (configuration.TeamA.Concat(configuration.TeamB).Any(item => string.IsNullOrWhiteSpace(item.Creature)))
-            throw new ArgumentException("Every team entry must specify a creature.");
+        return new BattleDefinition(configuration ?? throw new ArgumentException("Battle configuration is empty."));
     }
 }

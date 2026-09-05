@@ -1,6 +1,6 @@
-using CombatSimulator.Cli.Configuration;
+using CombatSimulator.Application.Configuration;
 
-namespace CombatSimulator.Cli.Replay;
+namespace CombatSimulator.Application.Replay;
 
 public sealed record ReplayDocument(
     int SchemaVersion,

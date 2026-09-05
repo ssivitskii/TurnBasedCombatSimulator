@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>CombatSimulator.Application</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../CombatSimulator.Core/CombatSimulator.Core.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,4 +1,4 @@
-using CombatSimulator.Cli.Configuration;
+using CombatSimulator.Application.Configuration;
 using CombatSimulator.Core.Boards;
 using CombatSimulator.Core.Combat;
 using CombatSimulator.Core.Randomness;

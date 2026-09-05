@@ -1,9 +1,9 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <RootNamespace>CombatSimulator.Cli</RootNamespace>
+    <RootNamespace>CombatSimulator.Api</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../CombatSimulator.Application/CombatSimulator.Application.csproj" />
+    <PackageReference Include="Swashbuckle.AspNetCore" />
   </ItemGroup>
 </Project>

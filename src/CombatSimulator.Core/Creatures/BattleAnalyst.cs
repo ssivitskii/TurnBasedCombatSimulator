@@ -17,7 +17,7 @@ public sealed class BattleAnalyst : Creature
 
     public override void AttackTarget(ICreature target, IRandomNumberGenerator randomNumberGenerator)
     {
-        SetAttack(new AttackPoint(Attack.Value + 2));
+        SetAttack(new AttackPoint((int)Math.Min(int.MaxValue, (long)Attack.Value + 2)));
         base.AttackTarget(target, randomNumberGenerator);
     }
 

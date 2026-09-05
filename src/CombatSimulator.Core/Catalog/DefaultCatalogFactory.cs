@@ -4,6 +4,9 @@ namespace CombatSimulator.Core.Catalog;
 
 public static class DefaultCatalogFactory
 {
+    public static IReadOnlyList<string> CreatureNames { get; } =
+        ["AmuletMaster", "BattleAnalyst", "DeathlessHorror", "MimicChest", "ViciousBrawler"];
+
     public static CreatureCatalog Create()
     {
         var catalog = new CreatureCatalog();

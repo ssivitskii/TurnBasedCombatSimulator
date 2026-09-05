@@ -3,7 +3,7 @@ using CombatSimulator.Core.Boards;
 using CombatSimulator.Core.Catalog;
 using CombatSimulator.Core.Modifiers;
 
-namespace CombatSimulator.Cli.Configuration;
+namespace CombatSimulator.Application.Configuration;
 
 public sealed class BattleDefinition
 {
@@ -11,7 +11,8 @@ public sealed class BattleDefinition
 
     public BattleDefinition(BattleConfiguration configuration)
     {
-        _configuration = configuration;
+        BattleConfigurationValidator.Validate(configuration);
+        _configuration = CloneConfiguration(configuration);
     }
 
     public int RoundLimit => _configuration.RoundLimit;
@@ -30,27 +31,22 @@ public sealed class BattleDefinition
             : (Build(_configuration.TeamA, catalog), Build(_configuration.TeamB, catalog));
     }
 
-    private static BattleConfiguration CloneConfiguration(BattleConfiguration configuration)
+    private static BattleConfiguration CloneConfiguration(BattleConfiguration configuration) => new()
     {
-        return new BattleConfiguration
-        {
-            RoundLimit = configuration.RoundLimit,
-            TeamA = CloneTeam(configuration.TeamA),
-            TeamB = CloneTeam(configuration.TeamB),
-        };
-    }
+        RoundLimit = configuration.RoundLimit,
+        TeamA = CloneTeam(configuration.TeamA),
+        TeamB = CloneTeam(configuration.TeamB),
+    };
 
     private static BattleConfiguration.CreatureConfiguration[] CloneTeam(
-        IReadOnlyList<BattleConfiguration.CreatureConfiguration>? team)
-    {
-        return team?.Select(item => new BattleConfiguration.CreatureConfiguration
+        IReadOnlyList<BattleConfiguration.CreatureConfiguration>? team) =>
+        team?.Select(item => new BattleConfiguration.CreatureConfiguration
         {
             Creature = item.Creature,
             Attack = item.Attack,
             Health = item.Health,
             Modifiers = item.Modifiers?.ToArray(),
         }).ToArray() ?? [];
-    }
 
     private static PlayerBoard Build(
         IReadOnlyList<BattleConfiguration.CreatureConfiguration>? configurations,
@@ -72,18 +68,13 @@ public sealed class BattleDefinition
         return board;
     }
 
-    private static ICreatureModifier ParseModifier(string modifier)
+    private static ICreatureModifier ParseModifier(string modifier) => modifier.ToLowerInvariant() switch
     {
-        return modifier.ToLowerInvariant() switch
-        {
-            "magicshield" => new MagicShieldModifier(),
-            "doublestrike" => new DoubleStrikeModifier(),
-            _ => throw new ArgumentException($"Unknown modifier '{modifier}'."),
-        };
-    }
+        "magicshield" => new MagicShieldModifier(),
+        "doublestrike" => new DoubleStrikeModifier(),
+        _ => throw new ArgumentException($"Unknown modifier '{modifier}'."),
+    };
 
-    private static string[] GetNames(IReadOnlyList<BattleConfiguration.CreatureConfiguration>? team)
-    {
-        return team?.Select(configuration => configuration.Creature ?? "<missing>").ToArray() ?? [];
-    }
+    private static string[] GetNames(IReadOnlyList<BattleConfiguration.CreatureConfiguration>? team) =>
+        team?.Select(configuration => configuration.Creature ?? "<missing>").ToArray() ?? [];
 }

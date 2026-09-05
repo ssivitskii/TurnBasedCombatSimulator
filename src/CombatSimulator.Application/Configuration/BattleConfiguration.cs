@@ -1,4 +1,4 @@
-namespace CombatSimulator.Cli.Configuration;
+namespace CombatSimulator.Application.Configuration;
 
 public sealed class BattleConfiguration
 {
